@@ -99,8 +99,8 @@ function getSelectedIndex(refselid) {
 
 //Método para controlar la opción de ingreso al sistema (boton Ingresar)
 function logIn(estado,e){
-    agregarPreloader("login");  // Método propio de esta clase que lanza la ruedita e espera 
-    var mesnajeinicial=e.target.value;// e.target: Hace referencia al elemento HTML que originó el evento (en este caso, el botón "Ingresar")
+    agregarPreloader("login");  // Método propio de esta clase que lanza la ruedita de espera 
+    var mesnajeinicial=e.target.value;// e.target: Hace referencia al elemento HTML que originó el evento (en este caso, el valor del botón "Ingresar")
         var edok=FSM2.getFSMStateById(estado);// Lo anterior era solo el servicio, este ya es el objeto correpondiente a este estado
         //---------- No se usan para nada ---------------//
         var mensajek=FSM2.getFSMStateMessageById(edok, mesnajeinicial); // Esto no se usa para nada
@@ -144,12 +144,13 @@ function logIn(estado,e){
 
         //Función ajax para mandar el JWT y la llave privada al Backend
         // Para una petición asíncrona de ajax al servidor 
+        // No sé para qué es esta petición si no hay servicioseguridad en el orquestador 
         $.ajax({
             url: '/RISSERVER/rest/USRSesionRST/servicioseguridad',  // URL del servicio
             type: 'POST',  // Método POST
-            contentType: 'application/x-www-form-urlencoded', 
-            dataType: 'text',  // Indicamos que esperamos recibir JSON
-            data: informacionJSON,  // Convertimos el objeto a JSON
+            contentType: 'application/x-www-form-urlencoded', // Tipo de contenido que estás enviando y este es por defecto pero para json 'application/json' 
+            dataType: 'text',  // Indicamos que esperamos recibir JSON. Pero aquí indica text 
+            data: informacionJSON,  // Convertimos el objeto a JSON ¿POR QUÉ ESTO ES VÁLIDO?
         beforeSend: function () {
             console.log('Enviando datos...');
         },
@@ -165,19 +166,19 @@ function logIn(estado,e){
             }
             }).done(function (data, textStatus, jqXHR) {
                 //Si en java se cifra, es necesario descifrarlo.
-                var datosjson = data; // Se guarda la información en la variable datosjson
+                var datosjson = data; // Contiene la respuesta JSON del servidor con la llave publico y el JWT 
                 var keypub = datosjson["llavepublica"];// Se obtiene la llave pública del objeto JSON
                 console.log(datosjson["JWT"]);
                 //console.log(datosjson["llavepublica"]);
                 
-                var isValid = KJUR.jws.JWS.verifyJWT(datosjson["JWT"], keypub, { alg: ['RS256'] });
+                var isValid = KJUR.jws.JWS.verifyJWT(datosjson["JWT"], keypub, { alg: ['RS256'] });v//erifyJWT: Verifica que: correctamente firmado (con la clave pública)
                 
                 if (isValid) {
                   console.log('El token es válido.');
                   // Analizar el JWT para obtener los claims
-                  var parsed = KJUR.jws.JWS.parse(datosjson["JWT"]);
-                  var payload = parsed.payloadObj; // Se obtiene la carga útil del JWT
-                  var subject = payload.sub;
+                  var parsed = KJUR.jws.JWS.parse(datosjson["JWT"]); // parse: Decodifica el token JWT
+                  var payload = parsed.payloadObj; // Se obtiene la carga útil del JWT. payloadObj: Contiene los datos del usuario (claims)
+                  var subject = payload.sub; // subject (sub): Datos principales del usuario en formato JSON string
                   var access_data = JSON.parse(subject);
                   console.log(access_data);
                   var usuario=access_data.Nombre+" "+access_data.Apaterno+" "+access_data.Amaterno; //nombre del usuario
