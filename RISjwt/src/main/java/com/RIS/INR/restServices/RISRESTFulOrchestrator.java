@@ -1386,7 +1386,7 @@ public class RISRESTFulOrchestrator {
     }
     
     @POST
-    @Path("/servicioseguridad")
+    @Path("/login")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED) 
     public Response servicioSeguridad(MultivaluedMap<String, String> datosjson) throws ParseException, NoSuchAlgorithmException, InvalidKeySpecException {

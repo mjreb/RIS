@@ -97,36 +97,53 @@ function getSelectedIndex(refselid) {
     }
 }
 
-//metodo para controlar la opción de ingreso al sistema (boton Ingresar)
+//Método para controlar la opción de ingreso al sistema (boton Ingresar)
 function logIn(estado,e){
-    agregarPreloader("login");
-    var mesnajeinicial=e.target.value;
-        //console.log("valor evento: "+e.target.value);
-        //edok=FSM2.getFSMStateById("login");
-        var edok=FSM2.getFSMStateById(estado);
-        //var mensajek=FSM2.getFSMStateMessageById(edok, "Ingresar");
-        var mensajek=FSM2.getFSMStateMessageById(edok, mesnajeinicial);
-        var restservice=mensajek.accion;
-        //console.log(edok.estado[0].vista);
-     //"Carlos", "abc123"
-     //"MARCO", "123"
-        var username = $('#uname').val();
+    agregarPreloader("login");  // Método propio de esta clase que lanza la ruedita e espera 
+    var mesnajeinicial=e.target.value;// e.target: Hace referencia al elemento HTML que originó el evento (en este caso, el botón "Ingresar")
+        var edok=FSM2.getFSMStateById(estado);// Lo anterior era solo el servicio, este ya es el objeto correpondiente a este estado
+        //---------- No se usan para nada ---------------//
+        var mensajek=FSM2.getFSMStateMessageById(edok, mesnajeinicial); // Esto no se usa para nada
+        var restservice=mensajek.accion; // No se usa para nada 
+        // ---------------nada---------------------------------
+        // $() es un selector jQuery, .val()  // Obtiene el valor actual del elemento (lo que el usuario escribió)
+        var username = $('#uname').val(); // Selecciona el elemento con id="uname" 
         var password = $('#psw').val();
-        ////////Bloque para integrar la funcionalidad de JSON Web Token//////////
-        var rsaKeyPair = KEYUTIL.generateKeypair("RSA", 2048);// Se crean el par de llaves
+        // # indica que se está seleccionando por ID
+        
+        /*/ Sin jQuery
+        var username = document.getElementById('uname').value;
+        var password = document.getElementById('psw').value;
+         * 
+         * @type type*
+         */
+        ////////Bloque para integrar la funcionalidad de JSON Web Token desde el Front - end //////////
+        var rsaKeyPair = KEYUTIL.generateKeypair("RSA", 2048);// Se crean el par de llaves con KEYUTIL.generateKeypair: Función de la librería jsrsasign
+        // RSA es el algoritmo de cifrado y 2048 es la longitus estandar en bits 
+        // rsaKeyPair es un objeto con dos claves 
+        // "PKCS8PRV": Formato específico para la clave privada
         var privateKey = KEYUTIL.getPEM(rsaKeyPair.prvKeyObj,"PKCS8PRV");// Se obtiene la llave privada
+        // KEYUTIL.getPEM: Convierte las claves a formato PEM (estándar para intercambio)
         var publicKey = KEYUTIL.getPEM(rsaKeyPair.pubKeyObj);//Se obtiene la llave pública
         console.log(publicKey);
+        
+        // 1ra parte de JWT: contiene el algoritmo y el tipo de token.
         var header ={ alg: "RS256", typ: "JWT"};// Se declara la cabecera del JWT 
         var base64 = btoa(username + ":" + password); // Se codifica en base 64 el usuario y la contraseña
+        //  btoa(): Función nativa de JavaScript para codificación Base64 
         //var payload = {"usuario":username,"contrasena":password};
-        var payload = {"base64":base64}; 
+            var payload = {"base64":base64}; 
+            
+         // Tercera parte: firma 
+         // KJUR.jws.JWS.sign es una función de firma de jwt de jsrasign
         var JSONToken = KJUR.jws.JWS.sign("RS256", JSON.stringify(header), JSON.stringify(payload), privateKey);// Se crea el JWT
         console.log(JSONToken);
+        // {String} KJUR.jws.JWS.sign(alg, spHead, spPayload, key, pass)
+        // JSON.stringify es para pasar una cadena a formato JSON 
         var informacionJSON = {"token":JSONToken, "llavepublica":publicKey};
-        
-        //var enviardatosbackend = {"usuario":username, "contrasena":password};
+
         //Función ajax para mandar el JWT y la llave privada al Backend
+        // Para una petición asíncrona de ajax al servidor 
         $.ajax({
             url: '/RISSERVER/rest/USRSesionRST/servicioseguridad',  // URL del servicio
             type: 'POST',  // Método POST
@@ -222,7 +239,7 @@ function logIn(estado,e){
             
         },
         error: function (xhr, textStatus, errorThrown) {
-            console.log('Error:', textStatus, errorThrown);
+            console.log('AYUDAAAAAAAAAAAA:', textStatus, errorThrown);
         }
         });
         
